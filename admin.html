@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pit Burguer — Painel do Proprietário</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="assets/logo.png">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body class="admin-body">
+
+<div class="admin-gate" id="adminGate">
+  <div class="admin-gate-box">
+    <img class="logo" src="assets/logo.png" alt="Pit Burguer" style="margin-bottom:12px;">
+    <h1 class="admin-title">Painel do Proprietário</h1>
+    <p class="muted">Digite a senha para editar o cardápio.</p>
+    <input type="password" id="adminPasswordInput" placeholder="Senha">
+    <button class="checkout-btn" id="adminLoginBtn">Entrar</button>
+    <p class="field-error show" id="adminLoginError" style="display:none;">Senha incorreta.</p>
+  </div>
+</div>
+
+<div class="admin-app" id="adminApp" style="display:none;">
+  <header class="admin-header">
+    <img class="logo" src="assets/logo.png" alt="Pit Burguer">
+    <div>
+      <h1 class="admin-title">Painel do Proprietário</h1>
+      <p class="muted" style="margin:2px 0 0;">Edite fotos, preços e disponibilidade do cardápio.</p>
+    </div>
+  </header>
+
+  <div class="admin-warning">
+    ⚠️ Esta senha protege só de curiosos casuais — qualquer pessoa que veja o código-fonte da página
+    consegue encontrá-la. Não é uma proteção de verdade. Não compartilhe o link deste painel publicamente.
+  </div>
+
+  <section class="admin-section">
+    <h2>Configurações gerais</h2>
+    <div class="admin-field-row">
+      <label for="cfgWhatsapp">Número do WhatsApp (com código do país e DDD, só números)</label>
+      <input type="text" id="cfgWhatsapp">
+    </div>
+    <div class="admin-field-row">
+      <label for="cfgPayments">Formas de pagamento (separadas por vírgula)</label>
+      <input type="text" id="cfgPayments">
+    </div>
+  </section>
+
+  <div id="adminCategories"></div>
+
+  <div class="admin-export-bar">
+    <button class="checkout-btn" id="exportBtn">⬇️ Baixar data.js atualizado</button>
+    <p class="muted admin-export-note">
+      Depois de baixar, substitua o arquivo <code>data.js</code> na pasta do site e reenvie pro Netlify
+      para as mudanças aparecerem pra todo mundo.
+    </p>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>
