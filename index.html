@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pit Burguer – Cardápio Digital</title>
-<meta name="description" content="Cardápio digital da Pit Burguer, hamburgueria artesanal em Paragominas. Peça pelo WhatsApp.">
+<meta name="description" content="Hambúrgueres artesanais, combos, porções e caldos em Paragominas. Monte seu pedido Pit Burguer e envie pelo WhatsApp.">
 <link rel="icon" href="assets/logo.png">
 <link rel="stylesheet" href="style.css">
 </head>
@@ -26,7 +26,33 @@
   </div>
 </header>
 
+<section class="hero" aria-labelledby="heroTitle">
+  <div class="hero-copy">
+    <p class="hero-origin"><span class="hero-origin-mark" aria-hidden="true"></span> Feito em Paragominas · PA</p>
+    <h2 id="heroTitle">Macaxeira crocante.<br><span>Abacaxi grelhado.</span><br>Pit Burguer.</h2>
+    <p class="hero-description">Combinações artesanais com personalidade. Escolha seu lanche, monte do seu jeito e envie o pedido pelo WhatsApp.</p>
+    <a class="hero-cta" href="#cat-lanches">Escolher meu pedido <span aria-hidden="true">↘</span></a>
+    <p class="hero-footnote">Sem cadastro. Seu pedido vai direto para a conversa.</p>
+  </div>
+  <div class="hero-art" aria-hidden="true">
+    <div class="hero-art-ring hero-art-ring-one"></div>
+    <div class="hero-art-ring hero-art-ring-two"></div>
+    <div class="hero-art-glow"></div>
+    <img src="assets/logo.png" alt="">
+    <span class="hero-art-caption">Pit Burguer<br><small>Paragominas, Pará</small></span>
+    <span class="hero-art-index">blend bovino<br><strong>150 g</strong></span>
+  </div>
+</section>
+
 <nav class="cat-nav" id="catNav" aria-label="Categorias do cardápio"></nav>
+
+<div class="menu-intro">
+  <div>
+    <p class="menu-kicker">Escolha sem pressa</p>
+    <h2>O cardápio</h2>
+  </div>
+  <p>Toque em <span aria-hidden="true">+</span> para ver detalhes e personalizar.</p>
+</div>
 
 <main id="menu"></main>
 
@@ -93,10 +119,25 @@
       <button class="cart-close" id="checkoutClose" aria-label="Fechar">✕</button>
     </div>
     <div class="checkout-body">
+      <div class="field-group customer-name-field">
+        <label for="customerNameInput">Seu nome <span class="muted">(opcional)</span></label>
+        <input type="text" id="customerNameInput" autocomplete="name" maxlength="80" placeholder="Como podemos te chamar?">
+      </div>
+
       <h3>Como vai receber?</h3>
       <div class="radio-group" id="deliveryTypeGroup">
         <label class="radio-pill"><input type="radio" name="deliveryType" value="entrega" checked><span>🛵 Entrega</span></label>
         <label class="radio-pill"><input type="radio" name="deliveryType" value="retirada"><span>🏠 Retirada no local</span></label>
+      </div>
+      <div class="pickup-location" id="pickupLocationField" hidden>
+        <div class="pickup-location-copy">
+          <span class="pickup-location-label">Endereço para retirada</span>
+          <address>R. Erva Mate, 26 — Bairro Flamboyant<br>Paragominas — PA</address>
+        </div>
+        <a class="pickup-map-link" href="https://maps.app.goo.gl/kaSVHfNPWyjJdGb98" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Zm-8 2.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"/></svg>
+          <span>Ver rota no Google Maps</span>
+        </a>
       </div>
       <div class="field-group" id="addressField">
         <label for="addressInput">Endereço completo</label>
@@ -106,9 +147,23 @@
 
       <h3>Forma de pagamento</h3>
       <div class="radio-group" id="paymentGroup"></div>
+
+      <div class="field-group" id="cardTypeField" style="display:none;">
+        <label>Crédito ou débito?</label>
+        <div class="radio-group" id="cardTypeGroup">
+          <label class="radio-pill"><input type="radio" name="cardType" value="Crédito"><span>Crédito</span></label>
+          <label class="radio-pill"><input type="radio" name="cardType" value="Débito"><span>Débito</span></label>
+        </div>
+        <p class="field-error" id="cardTypeError">Escolha crédito ou débito.</p>
+      </div>
+
       <div class="field-group" id="changeField">
-        <label for="changeInput">Troco para quanto? <span class="muted">(opcional)</span></label>
-        <input type="text" id="changeInput" inputmode="numeric" placeholder="Ex: R$ 50,00">
+        <label for="changeInput">Troco para quanto? <span class="muted">(opcional, deixe em branco se for pagar valor exato)</span></label>
+        <div class="currency-input">
+          <span class="currency-prefix">R$</span>
+          <input type="text" id="changeInput" inputmode="decimal" placeholder="0,00">
+        </div>
+        <p class="field-error" id="changeError">O troco precisa ser maior ou igual ao total do pedido.</p>
       </div>
     </div>
     <div class="cart-drawer-foot">
@@ -123,6 +178,9 @@
 </div>
 
 <script src="data.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/appwrite@27.0.0"></script>
+<script src="appwrite-config.js"></script>
+<script src="appwrite-client.js"></script>
 <script src="script.js"></script>
 </body>
 </html>

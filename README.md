@@ -1,60 +1,55 @@
 # Pit Burguer – Cardápio Digital
 
-Site simples (HTML/CSS/JS puro) com personalização de pedido (adicionais, sabores),
-carrinho, checkout com entrega/retirada e forma de pagamento, e painel do
-proprietário para editar preço, foto e disponibilidade dos itens.
+Cardápio digital mobile-first da Pit Burguer, com personalização de lanches e
+combos, carrinho, checkout de entrega ou retirada e finalização pelo WhatsApp.
+O painel permite atualizar preços, fotos e disponibilidade.
+
+Leia [CONCEITO.md](CONCEITO.md) para a proposta refinada e a direção de produto/visual.
 
 ## Arquivos
 
 - `index.html` — estrutura da página principal (cardápio + carrinho)
 - `style.css` — visual do site (cores, fontes, layout)
-- `data.js` — **todos os dados do cardápio** (itens, preços, sabores, fotos, WhatsApp, formas de pagamento)
+- `data.js` — cópia local inicial do cardápio e fallback para abrir a loja sem conexão
 - `script.js` — lógica do cardápio, personalização, carrinho e checkout
 - `admin.html` / `admin.js` / `admin.css` — painel do proprietário
+- `appwrite-config.js` / `appwrite-client.js` — conexão do navegador com o Appwrite
 - `assets/logo.png` — logo da Pit Burguer
 
 ## Como funciona pro cliente
 
 1. Toca em **+** num lanche ou combo → escolhe adicionais (e, no combo, a bebida inclusa) → adiciona ao carrinho.
 2. Toca em **+** numa bebida → escolhe o sabor (ou, na água, com/sem gás) → adiciona.
-3. Adicionais avulsos, caldos e porções são adicionados direto, sem tela extra.
-4. No carrinho, toca em **Continuar** → escolhe entrega (com endereço) ou retirada, e a forma de pagamento (dinheiro pede o troco) → **Enviar pedido no WhatsApp**.
-5. Abre o WhatsApp com a mensagem toda pronta: itens, adicionais, sabores, endereço e pagamento.
+3. Caldos e porções são adicionados direto, sem tela extra. Adicionais ficam na
+   personalização de lanches e combos, sem uma categoria separada.
+4. No carrinho, toca em **Continuar** → pode informar o nome, escolhe entrega
+   (com endereço) ou retirada, e a forma de pagamento (dinheiro pede troco;
+   cartão pede crédito ou débito) →
+   **Enviar pedido no WhatsApp**.
+5. Abre o WhatsApp com a mensagem pronta: itens, adicionais, observações, sabores,
+   endereço e pagamento.
 
-## Painel do proprietário (admin.html)
+## Configurar o Appwrite
 
-Abra `admin.html` no navegador. A senha padrão é:
+O painel usa Appwrite Auth para o login, TablesDB para o cardápio e Storage
+para as fotos. A loja pode ler o cardápio publicamente; só o usuário proprietário
+deve conseguir alterar a configuração e enviar imagens.
 
-```
-pitburguer2026
-```
+O projeto Appwrite `Pit Burguer` já foi criado no plano gratuito, na região Toronto (`tor`). O banco `pit_burguer`, a tabela `site_config`, o bucket `product_images`, a linha inicial `main` e a plataforma Web `localhost` também já estão configurados. O endpoint e o Project ID já foram preenchidos em `appwrite-config.js`.
 
-**Troque essa senha antes de publicar o site.** Ela fica no arquivo `admin.js`, na linha:
+1. No Appwrite Console, em **Auth → Users**, crie o usuário do proprietário e copie o ID. O site não oferece cadastro para clientes; novas contas ainda não recebem permissão para editar o cardápio.
+2. Nas permissões da tabela `site_config`, mantenha **Read** para `Any` e permita **Create** somente ao usuário proprietário. A linha `main` já permite leitura pública; conceda nela **Update** e **Delete** somente ao usuário proprietário.
+3. Nas permissões do bucket `product_images`, mantenha **Read** para `Any` e conceda **Create**, **Update** e **Delete** somente ao proprietário.
+4. Preencha o ID do usuário em `adminUserId` no `appwrite-config.js`. Os demais identificadores já estão definidos.
+5. Abra o site por um servidor HTTP local (veja abaixo), entre em `admin.html` e atualize o cardápio. As alterações serão salvas no Appwrite.
 
-```js
-const ADMIN_PASSWORD = "pitburguer2026";
-```
+O Appwrite Web SDK usa o endpoint público e o Project ID no navegador; não coloque uma API key nesse projeto. As permissões do Appwrite protegem a tabela e o bucket. O ID do administrador permanece vazio em `appwrite-config.js` até o proprietário ser criado. Enquanto isso, o cardápio continua usando os dados locais de `data.js` e o login do painel permanece desativado. O acesso via `file://` pode bloquear chamadas externas; use `http://localhost:8000`.
 
-⚠️ **Importante sobre segurança**: como o site é estático (sem servidor nem banco
-de dados), essa senha só afasta curiosos casuais — qualquer pessoa que abrir o
-código-fonte da página consegue encontrá-la. Não é proteção de verdade. Não
-divulgue o link do `admin.html` publicamente.
-
-No painel dá pra mudar, por item: **preço**, **foto** (cole a URL de uma imagem),
-**disponibilidade** (desmarcar tira o item do site) e, nas bebidas, os **sabores**.
-Também dá pra mudar o número do WhatsApp e as formas de pagamento aceitas.
-
-### Como as alterações do painel chegam ao site
-
-O site é estático — não existe um banco de dados compartilhado. Então o fluxo é:
-
-1. Edite o que quiser no painel.
-2. Clique em **"Baixar data.js atualizado"** — isso baixa um novo arquivo `data.js`.
-3. Substitua o arquivo `data.js` da pasta do site por esse novo.
-4. Reenvie a pasta pro Netlify (arrastando de novo, ou fazendo push se usar Git).
-
-Só depois desse passo 4 as mudanças aparecem pra quem visita o site. Não é uma
-edição "ao vivo" instantânea — é assim porque o site não tem servidor próprio.
+O painel altera preços, fotos (por URL ou envio de arquivo), disponibilidade,
+sabores, WhatsApp e pagamentos. Depois do primeiro carregamento, novas visitas
+recebem essas mudanças sem trocar `data.js` nem publicar de novo. Quem já estiver
+com a página aberta precisa recarregá-la. Os pedidos continuam indo para o
+WhatsApp; eles não são salvos no banco.
 
 ## Como editar o cardápio direto no código
 
@@ -69,17 +64,14 @@ Tudo fica no `data.js`. Cada item segue este formato:
 - `available: false` esconde o botão de compra e marca "Indisponível".
 - Itens de bebida (exceto água) têm `flavors: [...]` com a lista de sabores.
 - A água tem `gasOption: true` e `gasPrice` (quanto soma se escolher "com gás").
-- Os adicionais usados dentro de Lanches/Combos são os mesmos da categoria
-  `adicionais` (array `ADDONS`, reaproveitado).
+- Lanches e combos aceitam uma observação opcional por unidade (ex.: retirar um ingrediente).
+- Os adicionais são definidos no array `ADDONS` e usados dentro de Lanches e Combos.
 
 ## Como trocar o número do WhatsApp ou formas de pagamento
 
-Pelo painel (`admin.html`, seção "Configurações gerais") ou direto no `data.js`:
-
-```js
-let WHATSAPP_NUMBER = "5591982386167";
-let PAYMENT_METHODS = ["Dinheiro", "Cartão", "Pix"];
-```
+Depois da configuração, use a seção **Configurações gerais** do painel e clique
+em **Salvar alterações**. O arquivo `data.js` continua servindo como cópia inicial
+e fallback local.
 
 ## Como testar localmente
 
@@ -98,6 +90,6 @@ E acesse `http://localhost:8000`.
 ## Próximos passos possíveis
 
 - Fotos reais dos lanches (hoje aparece um ícone no lugar até você adicionar via painel).
-- Campo de observações no pedido (ex: "sem cebola").
-- Se o volume de pedidos crescer bastante, migrar pra uma solução com banco de
-  dados de verdade, pra edições do painel ficarem "ao vivo" sem precisar redeploy.
+- Confirmar horário de atendimento, taxa e bairros de entrega e prazo estimado.
+- Salvar e acompanhar pedidos no painel, se quiser receber e organizar pedidos
+  sem depender somente do histórico do WhatsApp.

@@ -9,6 +9,11 @@ let lineCounter = 0;
 
 function nextLineId(){ return "line_" + (++lineCounter); }
 function formatBRL(v){ return "R$ " + v.toFixed(2).replace(".", ","); }
+function escapeHTML(value){
+  return String(value).replace(/[&<>"']/g, char => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  })[char]);
+}
 
 function findItem(id){
   for (const cat of Object.values(MENU_DATA)){
@@ -126,7 +131,8 @@ function openItemModal(itemId, catKey){
     comboDrinkType: null,
     comboDrinkFlavor: null,
     flavor: null,
-    gas: false
+    gas: false,
+    note: ""
   };
 
   document.getElementById("modalItemName").textContent = item.name;
@@ -195,6 +201,14 @@ function buildModalBodyHTML(item, catKey){
     }
   }
 
+  if (catKey === "lanches" || catKey === "combos"){
+    html += `<div class="field-group item-note-field">
+      <label for="itemNoteInput">Algum ajuste? <span class="muted">(opcional)</span></label>
+      <textarea id="itemNoteInput" rows="2" maxlength="160" placeholder="Ex.: sem cebola"></textarea>
+      <span class="note-hint">Até 160 caracteres</span>
+    </div>`;
+  }
+
   if (!html){
     html = `<p class="muted">Sem opções adicionais para este item.</p>`;
   }
@@ -204,6 +218,11 @@ function buildModalBodyHTML(item, catKey){
 
 function wireModalBodyEvents(){
   const body = document.getElementById("modalBody");
+
+  const noteInput = body.querySelector("#itemNoteInput");
+  if (noteInput){
+    noteInput.addEventListener("input", () => { modalState.note = noteInput.value.trim(); });
+  }
 
   body.querySelectorAll("[data-addon-id]").forEach(cb => {
     cb.addEventListener("change", () => {
@@ -307,7 +326,7 @@ function updateModalFoot(){
 
 function confirmModalAdd(){
   if (!modalState || !isModalValid()) return;
-  const { item, catKey, qty, addonIds, comboDrinkType, comboDrinkFlavor, flavor, gas } = modalState;
+  const { item, catKey, qty, addonIds, comboDrinkType, comboDrinkFlavor, flavor, gas, note } = modalState;
 
   const addons = Array.from(addonIds).map(id => ADDONS.find(a => a.id === id)).filter(Boolean)
     .map(a => ({ id: a.id, name: a.name, price: a.price }));
@@ -323,7 +342,8 @@ function confirmModalAdd(){
     addons: addons.map(a => a.id).sort(),
     flavor: flavor || null,
     gas: !!gas,
-    comboDrink: comboDrink ? comboDrink.type + ":" + comboDrink.flavor : null
+    comboDrink: comboDrink ? comboDrink.type + ":" + comboDrink.flavor : null,
+    note: note || null
   });
 
   const unitPrice = computeModalUnitPrice();
@@ -340,6 +360,7 @@ function confirmModalAdd(){
       addons,
       flavor: flavor || null,
       gas: !!gas,
+      note: note || "",
       comboDrink,
       unitPrice,
       configKey
@@ -450,6 +471,7 @@ function updateCartBar(){
 function lineDetailLines(line){
   const details = [];
   line.addons.forEach(a => details.push(`+ ${a.name}`));
+  if (line.note) details.push(`Observação: ${line.note}`);
   if (line.comboDrink) details.push(`Bebida: ${line.comboDrink.name} (${line.comboDrink.flavor})`);
   if (line.flavor) details.push(`Sabor: ${line.flavor}`);
   if (line.gas) details.push(`Com gás`);
@@ -475,7 +497,7 @@ function renderCartDrawer(){
       div.innerHTML = `
         <div class="cart-line-info">
           <h4>${line.name}</h4>
-          ${details.length ? `<span class="cart-line-details">${details.join(" · ")}</span>` : ""}
+          ${details.length ? `<span class="cart-line-details">${details.map(escapeHTML).join(" · ")}</span>` : ""}
           <span class="cart-line-unit">${formatBRL(line.unitPrice)} cada</span>
         </div>
         <div class="cart-line-controls">
@@ -493,6 +515,13 @@ function renderCartDrawer(){
 }
 
 // ---------- Checkout: entrega, pagamento, mensagem final ----------
+function parseBRLInput(str){
+  if (!str) return null;
+  const normalized = str.trim().replace(/[^\d,.-]/g, "").replace(",", ".");
+  const value = parseFloat(normalized);
+  return isNaN(value) ? null : value;
+}
+
 function renderPaymentOptions(){
   const group = document.getElementById("paymentGroup");
   group.innerHTML = PAYMENT_METHODS.map((m, i) => `
@@ -501,22 +530,46 @@ function renderPaymentOptions(){
   group.querySelectorAll('input[name="payment"]').forEach(radio => {
     radio.addEventListener("change", () => {
       document.getElementById("changeField").style.display = radio.value === "Dinheiro" ? "" : "none";
+      const isCard = radio.value === "Cartão";
+      document.getElementById("cardTypeField").style.display = isCard ? "" : "none";
+      if (!isCard){
+        document.querySelectorAll('input[name="cardType"]').forEach(r => r.checked = false);
+        document.getElementById("cardTypeError").classList.remove("show");
+      }
     });
+  });
+
+  document.getElementById("changeInput").addEventListener("input", () => {
+    document.getElementById("changeError").classList.remove("show");
+    document.querySelector(".currency-input").classList.remove("invalid");
+  });
+  document.querySelectorAll('input[name="cardType"]').forEach(r => {
+    r.addEventListener("change", () => document.getElementById("cardTypeError").classList.remove("show"));
   });
 }
 
 function setupDeliveryToggle(){
+  const addressField = document.getElementById("addressField");
+  const pickupLocationField = document.getElementById("pickupLocationField");
+  const updateDeliveryFields = () => {
+    const deliveryType = document.querySelector('input[name="deliveryType"]:checked')?.value;
+    const isEntrega = deliveryType === "entrega";
+    addressField.style.display = isEntrega ? "" : "none";
+    pickupLocationField.hidden = isEntrega;
+    document.getElementById("addressError").classList.remove("show");
+  };
+
   document.querySelectorAll('input[name="deliveryType"]').forEach(radio => {
-    radio.addEventListener("change", () => {
-      const isEntrega = radio.value === "entrega";
-      document.getElementById("addressField").style.display = isEntrega ? "" : "none";
-      document.getElementById("addressError").classList.remove("show");
-    });
+    radio.addEventListener("change", updateDeliveryFields);
   });
+  updateDeliveryFields();
 }
 
 function buildOrderMessage(){
-  const lines = ["Olá! Gostaria de fazer o seguinte pedido:", ""];
+  const customerName = document.getElementById("customerNameInput").value.trim();
+  const lines = ["Olá! Gostaria de fazer o seguinte pedido:"];
+  if (customerName) lines.push(`Nome: ${customerName}`);
+  lines.push("");
   cart.forEach(line => {
     lines.push(`• ${line.qty}x ${line.name}`);
     lineDetailLines(line).forEach(d => lines.push(`   ${d}`));
@@ -532,14 +585,20 @@ function buildOrderMessage(){
     lines.push(`Endereço: ${document.getElementById("addressInput").value.trim()}`);
   } else {
     lines.push("Entrega: Retirada no local");
+    lines.push("Endereço: R. Erva Mate, 26 — Bairro Flamboyant, Paragominas — PA");
   }
   lines.push("");
 
   const payment = document.querySelector('input[name="payment"]:checked').value;
-  lines.push(`Pagamento: ${payment}`);
+  if (payment === "Cartão"){
+    const cardTypeEl = document.querySelector('input[name="cardType"]:checked');
+    lines.push(`Pagamento: Cartão — ${cardTypeEl ? cardTypeEl.value : ""}`);
+  } else {
+    lines.push(`Pagamento: ${payment}`);
+  }
   if (payment === "Dinheiro"){
-    const change = document.getElementById("changeInput").value.trim();
-    lines.push(change ? `Troco para: ${change}` : "Troco: não precisa");
+    const changeValue = parseBRLInput(document.getElementById("changeInput").value);
+    lines.push(changeValue ? `Troco para: ${formatBRL(changeValue)}` : "Troco: não precisa");
   }
 
   return lines.join("\n");
@@ -552,6 +611,27 @@ function trySendWhatsApp(){
     document.getElementById("addressInput").focus();
     return;
   }
+
+  const payment = document.querySelector('input[name="payment"]:checked').value;
+
+  if (payment === "Cartão" && !document.querySelector('input[name="cardType"]:checked')){
+    document.getElementById("cardTypeError").classList.add("show");
+    return;
+  }
+
+  if (payment === "Dinheiro"){
+    const raw = document.getElementById("changeInput").value.trim();
+    if (raw){
+      const changeValue = parseBRLInput(raw);
+      if (changeValue === null || changeValue < cartTotal()){
+        document.getElementById("changeError").classList.add("show");
+        document.querySelector(".currency-input").classList.add("invalid");
+        document.getElementById("changeInput").focus();
+        return;
+      }
+    }
+  }
+
   const message = encodeURIComponent(buildOrderMessage());
   window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, "_blank");
 
@@ -559,7 +639,9 @@ function trySendWhatsApp(){
   updateAll();
   closeCartDrawer();
   document.getElementById("addressInput").value = "";
+  document.getElementById("customerNameInput").value = "";
   document.getElementById("changeInput").value = "";
+  document.querySelectorAll('input[name="cardType"]').forEach(r => r.checked = false);
   showCartView();
 }
 
@@ -641,7 +723,11 @@ function setupItemEvents(){
 }
 
 // ---------- Init ----------
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  if (window.loadPitMenuFromAppwrite) await window.loadPitMenuFromAppwrite();
+  document.querySelectorAll('a.icon-link[href^="https://wa.me/"]').forEach(link => {
+    link.href = `https://wa.me/${WHATSAPP_NUMBER}`;
+  });
   renderCatNav();
   renderMenu();
   renderPaymentOptions();

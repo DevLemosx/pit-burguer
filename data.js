@@ -21,7 +21,7 @@ let PAYMENT_METHODS = ["Dinheiro", "Cartão", "Pix"];
 
 // Adicionais: usados tanto como categoria própria (compra avulsa) quanto
 // como opções dentro da personalização de Lanches e Combos.
-const ADDONS = [
+let ADDONS = [
   { id: "ad1", name: "Blend bovino 150g", desc: "Carne extra.", price: 12.00, image: "", available: true },
   { id: "ad2", name: "Molho caseiro", desc: "", price: 4.00, image: "", available: true },
   { id: "ad3", name: "Queijo cheddar", desc: "", price: 5.00, image: "", available: true },
@@ -33,12 +33,12 @@ const ADDONS = [
 ];
 
 // Opções de bebida inclusa nos combos (sem custo extra).
-const COMBO_DRINK_OPTIONS = {
+let COMBO_DRINK_OPTIONS = {
   refrigerante: { name: "Refrigerante Lata", flavors: ["Guaraná Antarctica"] },
   suco: { name: "Suco 300ml", flavors: ["Acerola", "Maracujá"] }
 };
 
-const MENU_DATA = {
+let MENU_DATA = {
   lanches: {
     label: "🍔 Lanches",
     note: "Todos os acompanhamentos vão dentro do lanche. Toque em + para escolher adicionais.",
@@ -70,12 +70,6 @@ const MENU_DATA = {
       { id: "c8", name: "Combo Picanha Burg", desc: "Picanha Burg + batata e bebida inclusa.", price: 45.99, image: "", available: true },
       { id: "c9", name: "Combo Pitbull Burg", desc: "Pitbull Burg + batata e bebida inclusa.", price: 52.99, image: "", available: true },
     ]
-  },
-  adicionais: {
-    label: "➕ Adicionais",
-    note: "Complemente seu lanche, ou peça avulso.",
-    icon: "➕",
-    items: ADDONS
   },
   caldos: {
     label: "🍲 Caldos",
@@ -109,3 +103,26 @@ const MENU_DATA = {
     ]
   }
 };
+
+// O site começa com estes dados locais e os substitui pelos dados do Appwrite
+// quando o projeto estiver configurado e acessível.
+function applyPitMenuConfig(config){
+  if (!config || typeof config !== "object") return;
+  if (config.menu_data && typeof config.menu_data === "object") MENU_DATA = config.menu_data;
+  if (Array.isArray(config.addons)) ADDONS = config.addons;
+  if (config.combo_drink_options && typeof config.combo_drink_options === "object") {
+    COMBO_DRINK_OPTIONS = config.combo_drink_options;
+  }
+  if (typeof config.whatsapp_number === "string") WHATSAPP_NUMBER = config.whatsapp_number;
+  if (Array.isArray(config.payment_methods)) PAYMENT_METHODS = config.payment_methods;
+}
+
+function getPitMenuConfig(){
+  return JSON.parse(JSON.stringify({
+    menu_data: MENU_DATA,
+    addons: ADDONS,
+    combo_drink_options: COMBO_DRINK_OPTIONS,
+    whatsapp_number: WHATSAPP_NUMBER,
+    payment_methods: PAYMENT_METHODS
+  }));
+}

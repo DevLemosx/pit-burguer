@@ -11,36 +11,44 @@
 </head>
 <body class="admin-body">
 
-<div class="admin-gate" id="adminGate">
-  <div class="admin-gate-box">
-    <img class="logo" src="assets/logo.png" alt="Pit Burguer" style="margin-bottom:12px;">
+<main class="admin-gate" id="adminGate">
+  <form class="admin-gate-box" id="adminLoginForm">
+    <img class="logo" src="assets/logo.png" alt="Pit Burguer">
     <h1 class="admin-title">Painel do Proprietário</h1>
-    <p class="muted">Digite a senha para editar o cardápio.</p>
-    <input type="password" id="adminPasswordInput" placeholder="Senha">
-    <button class="checkout-btn" id="adminLoginBtn">Entrar</button>
-    <p class="field-error show" id="adminLoginError" style="display:none;">Senha incorreta.</p>
-  </div>
-</div>
+    <p class="muted admin-login-copy">Entre com o e-mail e a senha cadastrados no Appwrite.</p>
+    <div class="admin-field-row">
+      <label for="adminEmailInput">E-mail</label>
+      <input type="email" id="adminEmailInput" autocomplete="username" required>
+    </div>
+    <div class="admin-field-row">
+      <label for="adminPasswordInput">Senha</label>
+      <input type="password" id="adminPasswordInput" autocomplete="current-password" required>
+    </div>
+    <button class="checkout-btn" id="adminLoginBtn" type="submit">Entrar</button>
+    <p class="admin-status" id="adminLoginStatus" role="status" aria-live="polite"></p>
+    <p class="admin-setup-note" id="adminSetupNote" hidden>
+      Falta cadastrar o usuário proprietário, ajustar as permissões e informar o ID dele. Siga as etapas do README.
+    </p>
+  </form>
+</main>
 
-<div class="admin-app" id="adminApp" style="display:none;">
+<main class="admin-app" id="adminApp" hidden>
   <header class="admin-header">
     <img class="logo" src="assets/logo.png" alt="Pit Burguer">
-    <div>
+    <div class="admin-header-copy">
       <h1 class="admin-title">Painel do Proprietário</h1>
-      <p class="muted" style="margin:2px 0 0;">Edite fotos, preços e disponibilidade do cardápio.</p>
+      <p class="muted" style="margin:2px 0 0;">Salve para atualizar o cardápio nas próximas visitas.</p>
     </div>
+    <button class="admin-logout" id="adminLogoutBtn" type="button">Sair</button>
   </header>
 
-  <div class="admin-warning">
-    ⚠️ Esta senha protege só de curiosos casuais — qualquer pessoa que veja o código-fonte da página
-    consegue encontrá-la. Não é uma proteção de verdade. Não compartilhe o link deste painel publicamente.
-  </div>
+  <p class="admin-status admin-save-status" id="adminSaveStatus" role="status" aria-live="polite"></p>
 
   <section class="admin-section">
     <h2>Configurações gerais</h2>
     <div class="admin-field-row">
-      <label for="cfgWhatsapp">Número do WhatsApp (com código do país e DDD, só números)</label>
-      <input type="text" id="cfgWhatsapp">
+      <label for="cfgWhatsapp">Número do WhatsApp (código do país e DDD, só números)</label>
+      <input type="tel" id="cfgWhatsapp" inputmode="numeric" autocomplete="tel">
     </div>
     <div class="admin-field-row">
       <label for="cfgPayments">Formas de pagamento (separadas por vírgula)</label>
@@ -51,15 +59,15 @@
   <div id="adminCategories"></div>
 
   <div class="admin-export-bar">
-    <button class="checkout-btn" id="exportBtn">⬇️ Baixar data.js atualizado</button>
-    <p class="muted admin-export-note">
-      Depois de baixar, substitua o arquivo <code>data.js</code> na pasta do site e reenvie pro Netlify
-      para as mudanças aparecerem pra todo mundo.
-    </p>
+    <button class="checkout-btn" id="saveMenuBtn" type="button">Salvar alterações</button>
+    <p class="muted admin-export-note">O cardápio público recebe os dados atualizados do banco.</p>
   </div>
-</div>
+</main>
 
 <script src="data.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/appwrite@27.0.0"></script>
+<script src="appwrite-config.js"></script>
+<script src="appwrite-client.js"></script>
 <script src="admin.js"></script>
 </body>
 </html>
